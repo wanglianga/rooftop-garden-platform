@@ -1,0 +1,16 @@
+node_modules/
+dist/
+target/
+.idea/
+.vscode/
+*.log
+logs/
+.git/
+.gitignore
+*.md
+.env
+.env.*
+*.db
+h2/
+.DS_Store
+coverage/

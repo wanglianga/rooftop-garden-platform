@@ -1,0 +1,13 @@
+target/
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.mvn/
+mvnw
+mvnw.cmd
+*.log
+logs/
+h2/
+*.db
