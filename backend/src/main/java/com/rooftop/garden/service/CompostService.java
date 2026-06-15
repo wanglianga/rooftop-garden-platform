@@ -73,9 +73,29 @@ public class CompostService {
 
     @Transactional
     public CompostDelivery createDelivery(CompostDelivery delivery) {
+        if (delivery.getBinId() == null) {
+            throw new IllegalArgumentException("请选择厨余桶");
+        }
+        if (delivery.getUserId() == null) {
+            throw new IllegalArgumentException("用户信息缺失");
+        }
+        if (delivery.getWeight() == null || delivery.getWeight().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("投放重量必须大于0");
+        }
+
         CompostBin bin = binRepository.findById(delivery.getBinId())
-                .orElseThrow(() -> new RuntimeException("Compost bin not found"));
-        
+                .orElseThrow(() -> new RuntimeException("厨余桶不存在"));
+
+        if (delivery.getHasPlastic() == null) {
+            delivery.setHasPlastic(false);
+        }
+        if (delivery.getHasLiquid() == null) {
+            delivery.setHasLiquid(false);
+        }
+        if (delivery.getContaminationLevel() == null || delivery.getContaminationLevel().trim().isEmpty()) {
+            delivery.setContaminationLevel("无");
+        }
+
         BigDecimal newWeight = bin.getCurrentWeight().add(delivery.getWeight());
         bin.setCurrentWeight(newWeight);
 

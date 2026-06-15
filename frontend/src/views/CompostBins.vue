@@ -24,7 +24,7 @@
                 </el-tag>
               </div>
               <el-dropdown @command="(cmd) => handleCommand(cmd, bin)">
-                <el-icon class="more-icon"><MoreFilled /></el-icon>
+                <el-icon class="more-icon"><More /></el-icon>
                 <template #dropdown>
                   <el-dropdown-menu>
                     <el-dropdown-item command="edit">编辑</el-dropdown-item>
@@ -80,7 +80,7 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getBins, emptyBin as apiEmptyBin } from '@/api/compost'
-import { Plus, Location, Box, MoreFilled } from '@element-plus/icons-vue'
+import { Plus, Location, Box, More } from '@element-plus/icons-vue'
 
 const bins = ref([])
 const showAddDialog = ref(false)

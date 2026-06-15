@@ -65,11 +65,17 @@ import {
   Sunny,
   Grid,
   Document,
-  Bucket,
+  Food,
   DataLine,
-  Wheat,
+  Goods,
   Tools,
-  UserFilled
+  UserFilled,
+  Setting,
+  Warning,
+  ChatDotRound,
+  SemiSelect,
+  TrendCharts,
+  Box
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
@@ -88,8 +94,8 @@ const menuItems = computed(() => {
 
   if (role === 'RESIDENT') {
     menus.push({ path: '/my-claims', name: '我的认领', icon: 'Document' })
-    menus.push({ path: '/compost-delivery', name: '厨余投放', icon: 'Bucket' })
-    menus.push({ path: '/harvests', name: '采收记录', icon: 'Wheat' })
+    menus.push({ path: '/compost-delivery', name: '厨余投放', icon: 'Food' })
+    menus.push({ path: '/harvests', name: '采收记录', icon: 'Goods' })
   } else if (role === 'PROPERTY') {
     menus.push({ path: '/claims', name: '认领管理', icon: 'Document' })
     menus.push({ path: '/inspections', name: '巡查记录', icon: 'DataLine' })

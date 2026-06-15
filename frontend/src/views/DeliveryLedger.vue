@@ -23,37 +23,54 @@
 
       <el-table :data="deliveries" v-loading="loading" stripe>
         <el-table-column prop="id" label="ID" width="60" />
-        <el-table-column prop="binId" label="桶号" width="80" />
-        <el-table-column prop="userId" label="用户ID" width="80" />
-        <el-table-column prop="weight" label="重量(kg)" width="100" />
-        <el-table-column prop="foodType" label="厨余类型" show-overflow-tooltip />
-        <el-table-column prop="contaminationLevel" label="污染" width="80">
+        <el-table-column prop="binId" label="桶号" width="70" />
+        <el-table-column prop="userId" label="用户ID" width="70" />
+        <el-table-column prop="weight" label="重量(kg)" width="90" />
+        <el-table-column prop="foodType" label="厨余类型" min-width="140" show-overflow-tooltip />
+        <el-table-column prop="contaminationLevel" label="污染" width="70">
           <template #default="{ row }">
             <el-tag size="small" :type="getContaminationType(row.contaminationLevel)">
               {{ row.contaminationLevel || '无' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="塑料" width="60">
+        <el-table-column label="塑料" width="60" align="center">
           <template #default="{ row }">
             <el-tag size="small" type="danger" v-if="row.hasPlastic">有</el-tag>
             <el-tag size="small" type="success" v-else>无</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="100">
+        <el-table-column label="液体" width="60" align="center">
+          <template #default="{ row }">
+            <el-tag size="small" type="warning" v-if="row.hasLiquid">有</el-tag>
+            <el-tag size="small" type="success" v-else>无</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="状态" width="90">
           <template #default="{ row }">
             <el-tag size="small" :type="row.collected ? 'success' : 'warning'">
               {{ row.collected ? '已收集' : '待收集' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="deliveryTime" label="投放时间" width="180" />
-        <el-table-column prop="collectTime" label="收集时间" width="180" />
+        <el-table-column prop="remark" label="备注" min-width="120" show-overflow-tooltip>
+          <template #default="{ row }">
+            <span v-if="row.remark">{{ row.remark }}</span>
+            <span v-else style="color: #c0c4cc">-</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="deliveryTime" label="投放时间" width="170" />
+        <el-table-column prop="collectTime" label="收集时间" width="170">
+          <template #default="{ row }">
+            <span v-if="row.collectTime">{{ row.collectTime }}</span>
+            <span v-else style="color: #c0c4cc">-</span>
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="100" fixed="right">
           <template #default="{ row }">
-            <el-button 
+            <el-button
               v-if="!row.collected"
-              size="small" 
+              size="small"
               type="primary"
               @click="collectDelivery(row)"
             >
@@ -68,27 +85,28 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { useUserStore } from '@/store/user'
-import { getDeliveries, collectDelivery as apiCollect } from '@/api/compost'
+import { getDeliveries, getUncollectedDeliveries, collectDelivery as apiCollect } from '@/api/compost'
 
 const userStore = useUserStore()
 
 const deliveries = ref([])
 const loading = ref(false)
 const statusFilter = ref('')
+const collecting = ref(false)
 
-const totalWeight = computed(() => 
+const totalWeight = computed(() =>
   deliveries.value.reduce((sum, d) => sum + (parseFloat(d.weight) || 0), 0)
 )
 
-const uncollectedCount = computed(() => 
+const uncollectedCount = computed(() =>
   deliveries.value.filter(d => !d.collected).length
 )
 
 const contaminationRate = computed(() => {
   if (deliveries.value.length === 0) return 0
-  const contaminated = deliveries.value.filter(d => 
+  const contaminated = deliveries.value.filter(d =>
     d.contaminationLevel && d.contaminationLevel !== '无'
   ).length
   return Math.round((contaminated / deliveries.value.length) * 100)
@@ -99,14 +117,15 @@ const loadData = async () => {
   try {
     let data
     if (statusFilter.value === 'uncollected') {
-      const response = await fetch('/api/compost/deliveries/uncollected')
-      data = await response.json()
+      data = await getUncollectedDeliveries()
     } else {
       data = await getDeliveries()
     }
     deliveries.value = data
   } catch (e) {
     console.error(e)
+    const msg = e?.response?.data?.message || e?.message || '加载投放台账失败'
+    ElMessage.error(msg)
   } finally {
     loading.value = false
   }
@@ -123,11 +142,26 @@ const getContaminationType = (level) => {
 
 const collectDelivery = async (row) => {
   try {
+    await ElMessageBox.confirm(
+      `确认已收集桶 ${row.binId} 的 ${row.weight} kg 厨余？`,
+      '收集确认',
+      { type: 'info', confirmButtonText: '确认收集', cancelButtonText: '取消' }
+    )
+  } catch (_e) {
+    return
+  }
+
+  collecting.value = true
+  try {
     await apiCollect(row.id, userStore.currentUser.id)
-    ElMessage.success('已收集')
+    ElMessage({ type: 'success', message: `已收集 ${row.weight} kg 厨余`, duration: 2000 })
     loadData()
   } catch (e) {
     console.error(e)
+    const msg = e?.response?.data?.message || e?.message || '收集失败，请稍后重试'
+    ElMessageBox.alert(msg, '收集失败', { type: 'error' })
+  } finally {
+    collecting.value = false
   }
 }
 

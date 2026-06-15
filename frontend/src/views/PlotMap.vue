@@ -118,7 +118,7 @@
 
         <div class="detail-actions" v-if="canClaim">
           <el-button type="primary" @click="handleClaim">
-            <el-icon><DocumentAdd /></el-icon>
+            <el-icon><EditPen /></el-icon>
             认领菜畦
           </el-button>
         </div>
@@ -172,7 +172,7 @@ import {
   Clock,
   User,
   Sunny,
-  DocumentAdd
+  EditPen
 } from '@element-plus/icons-vue'
 
 const router = useRouter()
