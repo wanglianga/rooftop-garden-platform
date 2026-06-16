@@ -247,6 +247,18 @@ wl-306/
 - `GET /api/gardener/suggestions` - 获取巡园建议
 - `GET /api/gardener/seedling-records` - 获取补苗记录
 
+### 厨余污染处理
+- `GET /api/contamination` - 获取所有污染记录
+- `GET /api/contamination/{id}` - 获取污染记录详情
+- `GET /api/contamination/user/{userId}` - 获取指定用户的污染记录
+- `GET /api/contamination/pending` - 获取待处理的污染记录
+- `POST /api/contamination/report` - 回收员上报污染并隔离桶/批次
+- `POST /api/contamination/{id}/assign-gardener` - 分配园艺师处理
+- `POST /api/contamination/{id}/gardener-dispose` - 园艺师处理判定
+- `POST /api/contamination/{id}/pause-points` - 物业暂停绿色积分
+- `POST /api/contamination/{id}/recover-points` - 物业恢复绿色积分
+- `POST /api/contamination/{id}/update-final-result` - 更新堆肥最终结果
+
 ## 注意事项
 
 1. H2 数据库为内存数据库，重启后数据会丢失，如需持久化请修改配置

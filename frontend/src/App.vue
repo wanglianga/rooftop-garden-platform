@@ -72,6 +72,7 @@ import {
   UserFilled,
   Setting,
   Warning,
+  WarningFilled,
   ChatDotRound,
   SemiSelect,
   TrendCharts,
@@ -96,11 +97,13 @@ const menuItems = computed(() => {
     menus.push({ path: '/my-claims', name: '我的认领', icon: 'Document' })
     menus.push({ path: '/compost-delivery', name: '厨余投放', icon: 'Food' })
     menus.push({ path: '/harvests', name: '采收记录', icon: 'Goods' })
+    menus.push({ path: '/contamination', name: '污染记录', icon: 'WarningFilled' })
   } else if (role === 'PROPERTY') {
     menus.push({ path: '/claims', name: '认领管理', icon: 'Document' })
     menus.push({ path: '/inspections', name: '巡查记录', icon: 'DataLine' })
     menus.push({ path: '/tool-keys', name: '工具钥匙', icon: 'Tools' })
     menus.push({ path: '/visitors', name: '访客管理', icon: 'UserFilled' })
+    menus.push({ path: '/contamination', name: '污染处理', icon: 'WarningFilled' })
     menus.push({ path: '/settings', name: '系统设置', icon: 'Setting' })
   } else if (role === 'GARDENER') {
     menus.push({ path: '/soil-reports', name: '土壤检测', icon: 'DataLine' })
@@ -108,10 +111,12 @@ const menuItems = computed(() => {
     menus.push({ path: '/suggestions', name: '巡园建议', icon: 'ChatDotRound' })
     menus.push({ path: '/seedling-records', name: '补苗记录', icon: 'SemiSelect' })
     menus.push({ path: '/compost-batches', name: '堆肥批次', icon: 'TrendCharts' })
+    menus.push({ path: '/contamination', name: '污染判定', icon: 'WarningFilled' })
   } else if (role === 'COLLECTOR') {
     menus.push({ path: '/compost-bins', name: '厨余桶', icon: 'Box' })
     menus.push({ path: '/compost-batches', name: '堆肥批次', icon: 'TrendCharts' })
     menus.push({ path: '/deliveries', name: '投放台账', icon: 'Document' })
+    menus.push({ path: '/contamination', name: '污染上报', icon: 'WarningFilled' })
   }
 
   return menus

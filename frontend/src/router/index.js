@@ -89,6 +89,11 @@ const routes = [
     path: '/plot-detail/:id',
     name: 'PlotDetail',
     component: () => import('@/views/PlotDetail.vue')
+  },
+  {
+    path: '/contamination',
+    name: 'Contamination',
+    component: () => import('@/views/ContaminationRecords.vue')
   }
 ]
 

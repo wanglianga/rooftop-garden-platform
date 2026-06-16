@@ -53,6 +53,12 @@ public class CompostBatch {
 
     private String remark;
 
+    private Boolean contaminated;
+
+    private Long contaminationRecordId;
+
+    private String contaminationRemark;
+
     private LocalDateTime createTime;
 
     private LocalDateTime updateTime;
@@ -63,7 +69,10 @@ public class CompostBatch {
         MATURING,
         MATURE,
         USED,
-        SOLD
+        SOLD,
+        ISOLATED,
+        SCRAPPED,
+        EXTENDED_FERMENTATION
     }
 
     @PrePersist
@@ -72,6 +81,9 @@ public class CompostBatch {
         updateTime = LocalDateTime.now();
         if (turnCount == null) {
             turnCount = 0;
+        }
+        if (contaminated == null) {
+            contaminated = false;
         }
     }
 

@@ -17,4 +17,6 @@ public interface CompostBatchRepository extends JpaRepository<CompostBatch, Long
     List<CompostBatch> findByStatusIn(List<CompostBatch.BatchStatus> statuses);
 
     List<CompostBatch> findByUsedPlotId(Long usedPlotId);
+
+    List<CompostBatch> findBySourceBinId(Long sourceBinId);
 }

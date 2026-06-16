@@ -66,7 +66,7 @@
             <span v-else style="color: #c0c4cc">-</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="100" fixed="right">
+        <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
             <el-button
               v-if="!row.collected"
@@ -76,18 +76,85 @@
             >
               收集
             </el-button>
+            <el-button
+              size="small"
+              type="danger"
+              @click="openReportDialog(row)"
+            >
+              标记污染
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
     </el-card>
+
+    <el-dialog v-model="reportDialogVisible" title="标记厨余污染" width="650px" @close="resetReportForm">
+      <el-alert
+        v-if="currentDelivery"
+        :title="`桶号：${currentDelivery.binId} | 用户ID：${currentDelivery.userId} | 重量：${currentDelivery.weight}kg`"
+        type="warning"
+        show-icon
+        style="margin-bottom: 16px"
+      />
+      <el-form :model="reportForm" :rules="reportRules" label-width="100px" ref="reportFormRef">
+        <el-form-item label="污染类型" prop="contaminationTypes">
+          <el-checkbox-group v-model="reportForm.contaminationTypeList">
+            <el-checkbox value="塑料袋">塑料袋</el-checkbox>
+            <el-checkbox value="油汤">油汤</el-checkbox>
+            <el-checkbox value="骨头">骨头</el-checkbox>
+            <el-checkbox value="外卖盒">外卖盒</el-checkbox>
+            <el-checkbox value="其他">其他</el-checkbox>
+          </el-checkbox-group>
+        </el-form-item>
+        <el-form-item label="污染程度" prop="severityLevel">
+          <el-radio-group v-model="reportForm.severityLevel">
+            <el-radio value="MILD">轻微</el-radio>
+            <el-radio value="MODERATE">中等</el-radio>
+            <el-radio value="SEVERE">严重</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="现场照片" prop="photoUrl">
+          <el-upload
+            class="upload-demo"
+            action="#"
+            list-type="picture-card"
+            :auto-upload="false"
+            :on-change="handlePhotoChange"
+            :limit="3"
+          >
+            <el-icon><Plus /></el-icon>
+          </el-upload>
+          <div class="tip-text">最多上传3张现场照片（演示环境暂不实际上传，用占位符模拟）</div>
+        </el-form-item>
+        <el-form-item label="备注说明">
+          <el-input
+            v-model="reportForm.remark"
+            type="textarea"
+            :rows="3"
+            maxlength="200"
+            show-word-limit
+            placeholder="请详细描述污染情况，便于园艺师判定处理方式"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="reportDialogVisible = false">取消</el-button>
+        <el-button type="danger" :loading="reporting" @click="submitReport">
+          <el-icon><Warning /></el-icon>
+          确认标记并隔离
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus, Warning } from '@element-plus/icons-vue'
 import { useUserStore } from '@/store/user'
 import { getDeliveries, getUncollectedDeliveries, collectDelivery as apiCollect } from '@/api/compost'
+import { reportContamination } from '@/api/contamination'
 
 const userStore = useUserStore()
 
@@ -95,6 +162,33 @@ const deliveries = ref([])
 const loading = ref(false)
 const statusFilter = ref('')
 const collecting = ref(false)
+
+const reportDialogVisible = ref(false)
+const currentDelivery = ref(null)
+const reportFormRef = ref(null)
+const reporting = ref(false)
+const reportForm = ref({
+  contaminationTypeList: [],
+  severityLevel: '',
+  photoUrl: '',
+  remark: ''
+})
+
+const reportRules = {
+  contaminationTypes: [
+    {
+      validator: (_r, _v, cb) => {
+        if (!reportForm.value.contaminationTypeList || reportForm.value.contaminationTypeList.length === 0) {
+          cb(new Error('请至少选择一种污染类型'))
+        } else {
+          cb()
+        }
+      },
+      trigger: 'change'
+    }
+  ],
+  severityLevel: [{ required: true, message: '请评估污染程度', trigger: 'change' }]
+}
 
 const totalWeight = computed(() =>
   deliveries.value.reduce((sum, d) => sum + (parseFloat(d.weight) || 0), 0)
@@ -165,6 +259,92 @@ const collectDelivery = async (row) => {
   }
 }
 
+const openReportDialog = (row) => {
+  currentDelivery.value = row
+  reportForm.value = {
+    contaminationTypeList: [],
+    severityLevel: '',
+    photoUrl: '',
+    remark: ''
+  }
+  const existingTypes = []
+  if (row.hasPlastic) existingTypes.push('塑料袋')
+  if (row.hasLiquid) existingTypes.push('油汤')
+  if (row.contaminationLevel === '严重') {
+    reportForm.value.severityLevel = 'SEVERE'
+  } else if (row.contaminationLevel === '轻微') {
+    reportForm.value.severityLevel = 'MILD'
+  }
+  if (existingTypes.length > 0) {
+    reportForm.value.contaminationTypeList = existingTypes
+  }
+  reportDialogVisible.value = true
+}
+
+const handlePhotoChange = (file) => {
+  reportForm.value.photoUrl = `simulated-photo-${Date.now()}-${file.name}`
+}
+
+const resetReportForm = () => {
+  currentDelivery.value = null
+  reportForm.value = {
+    contaminationTypeList: [],
+    severityLevel: '',
+    photoUrl: '',
+    remark: ''
+  }
+  if (reportFormRef.value) {
+    reportFormRef.value.resetFields()
+  }
+}
+
+const submitReport = async () => {
+  if (!reportFormRef.value) return
+  try {
+    await reportFormRef.value.validate()
+  } catch (_e) {
+    ElMessage.warning('请完善污染标记必填项')
+    return
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      '确认后该桶将被隔离并从正常发酵批次中移除，是否继续？',
+      '标记污染确认',
+      { type: 'warning', confirmButtonText: '确认标记', cancelButtonText: '取消' }
+    )
+  } catch (_e) {
+    return
+  }
+
+  reporting.value = true
+  try {
+    const payload = {
+      binId: currentDelivery.value.binId,
+      deliveryId: currentDelivery.value.id,
+      userId: currentDelivery.value.userId,
+      reporterId: userStore.currentUser.id,
+      contaminationTypes: reportForm.value.contaminationTypeList.join('、'),
+      severityLevel: reportForm.value.severityLevel,
+      photoUrl: reportForm.value.photoUrl || undefined
+    }
+    await reportContamination(payload)
+    ElMessage({
+      type: 'success',
+      message: '已标记污染并隔离该桶，已通知园艺师进行判定',
+      duration: 3000
+    })
+    reportDialogVisible.value = false
+    loadData()
+  } catch (e) {
+    console.error(e)
+    const msg = e?.response?.data?.message || e?.message || '标记污染失败'
+    ElMessageBox.alert(msg, '操作失败', { type: 'error' })
+  } finally {
+    reporting.value = false
+  }
+}
+
 onMounted(() => {
   loadData()
 })
@@ -189,5 +369,11 @@ onMounted(() => {
   margin-bottom: 20px;
   background: linear-gradient(135deg, #f5f7fa, #e8ecf1);
   border-radius: 8px;
+}
+
+.tip-text {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 6px;
 }
 </style>

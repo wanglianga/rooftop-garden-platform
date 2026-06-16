@@ -32,6 +32,10 @@ public class CompostBin {
 
     private String remark;
 
+    private Boolean contaminated;
+
+    private Long contaminationRecordId;
+
     private LocalDateTime lastMaintenanceDate;
 
     private LocalDateTime createTime;
@@ -44,7 +48,8 @@ public class CompostBin {
         FULL,
         FERMENTING,
         MAINTENANCE,
-        INACTIVE
+        INACTIVE,
+        ISOLATED
     }
 
     @PrePersist
@@ -53,6 +58,9 @@ public class CompostBin {
         updateTime = LocalDateTime.now();
         if (currentWeight == null) {
             currentWeight = BigDecimal.ZERO;
+        }
+        if (contaminated == null) {
+            contaminated = false;
         }
     }
 

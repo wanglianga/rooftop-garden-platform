@@ -29,6 +29,14 @@ public class User {
 
     private String avatar;
 
+    private Integer greenPoints;
+
+    private Boolean pointsPaused;
+
+    private LocalDateTime pointsPauseStartTime;
+
+    private String pointsPauseReason;
+
     private LocalDateTime createTime;
 
     private LocalDateTime updateTime;
@@ -44,6 +52,12 @@ public class User {
     protected void onCreate() {
         createTime = LocalDateTime.now();
         updateTime = LocalDateTime.now();
+        if (greenPoints == null) {
+            greenPoints = 0;
+        }
+        if (pointsPaused == null) {
+            pointsPaused = false;
+        }
     }
 
     @PreUpdate
